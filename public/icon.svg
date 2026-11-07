@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#B84A28"/>
+  <circle cx="256" cy="256" r="180" fill="#FAF6EF" opacity="0.15"/>
+  <!-- Cross and speaking sound symbol -->
+  <path d="M226 140 H286 V226 H372 V286 H286 V372 H226 V286 H140 V226 H226 Z" fill="#FAF6EF"/>
+  <circle cx="370" cy="150" r="32" fill="#1E6B65"/>
+  <path d="M358 150 A12 12 0 0 1 370 138" stroke="#FAF6EF" stroke-width="4" stroke-linecap="round"/>
+</svg>

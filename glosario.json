@@ -1,0 +1,76 @@
+{
+  "estado": "por validar con hablante nativo",
+  "nota": "Todos los términos en quechua incluidos en este glosario están marcados como 'por validar con hablante nativo'. No inventar más términos.",
+  "terminos": [
+    {
+      "id": "uma_nanay",
+      "quechua": "uma nanay",
+      "espanol": "dolor de cabeza",
+      "zona_cuerpo": "cabeza",
+      "icono": "Brain",
+      "estado_validacion": "por validar con hablante nativo"
+    },
+    {
+      "id": "wiksa_nanay",
+      "quechua": "wiksa nanay",
+      "espanol": "dolor de barriga",
+      "zona_cuerpo": "barriga",
+      "icono": "Activity",
+      "estado_validacion": "por validar con hablante nativo"
+    },
+    {
+      "id": "kunka_nanay",
+      "quechua": "kunka nanay",
+      "espanol": "dolor de garganta",
+      "zona_cuerpo": "garganta",
+      "icono": "Mic",
+      "estado_validacion": "por validar con hablante nativo"
+    },
+    {
+      "id": "sonqo_nanay",
+      "quechua": "sonqo nanay",
+      "espanol": "dolor de pecho",
+      "zona_cuerpo": "pecho",
+      "icono": "HeartPulse",
+      "estado_validacion": "por validar con hablante nativo"
+    }
+  ],
+  "preguntas": [
+    {
+      "id": "fiebre",
+      "espanol": "¿Tiene fiebre?",
+      "quechua": "¿Rupariyniyki kanchu?",
+      "estado_validacion": "por validar con hablante nativo"
+    },
+    {
+      "id": "duracion_3dias",
+      "espanol": "¿Desde hace más de 3 días?",
+      "quechua": "¿Kimsantin punchawmantachu nanasunki?",
+      "estado_validacion": "por validar con hablante nativo"
+    },
+    {
+      "id": "embarazo",
+      "espanol": "¿Está embarazada?",
+      "quechua": "¿Wiksayuqchu kashanki?",
+      "estado_validacion": "por validar con hablante nativo"
+    },
+    {
+      "id": "alergias",
+      "espanol": "¿Tiene alergias?",
+      "quechua": "¿Imapas cuerpoykita unquchisunkichu (alergia)?",
+      "estado_validacion": "por validar con hablante nativo"
+    },
+    {
+      "id": "medicamento",
+      "espanol": "¿Toma algún medicamento?",
+      "quechua": "¿Imapas hampita upyashankichu?",
+      "estado_validacion": "por validar con hablante nativo"
+    },
+    {
+      "id": "golpes_caidas",
+      "espanol": "¿Tuvo golpes o caídas?",
+      "quechua": "¿Urmarqankichu icha takakurqankichu?",
+      "estado_validacion": "por validar con hablante nativo"
+    }
+  ]
+}

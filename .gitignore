@@ -1,0 +1,19 @@
+# Node & Build artifacts
+node_modules/
+dist/
+build/
+.env
+
+# Android & Gradle
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+
+# Server runtime data
+server/data/*.json
+!server/data/.gitkeep

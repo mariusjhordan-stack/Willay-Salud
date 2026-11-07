@@ -1,0 +1,17 @@
+{
+  "name": "Willay Salud",
+  "short_name": "WillaySalud",
+  "description": "Herramienta de comunicación médico-paciente Quechua - Español",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6EF",
+  "theme_color": "#B84A28",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
