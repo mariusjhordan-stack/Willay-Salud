@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { DisclaimerBanner } from './components/DisclaimerBanner';
 import { PatientView } from './components/PatientView';
@@ -38,13 +38,11 @@ export const App: React.FC = () => {
 
   // Load initial session, patients and history
   useEffect(() => {
-    // Check doctor auth session
     const current = authService.getCurrentUser();
     if (current) {
       setDoctorUser(current);
     }
 
-    // Load patients from localStorage or default to MOCK_PACIENTES
     try {
       const storedPacientes = localStorage.getItem(PACIENTES_STORAGE_KEY);
       if (storedPacientes) {
@@ -57,7 +55,6 @@ export const App: React.FC = () => {
       setPacientes(MOCK_PACIENTES);
     }
 
-    // Load clinical history
     try {
       const storedHistorial = localStorage.getItem(HISTORIAL_STORAGE_KEY);
       if (storedHistorial) {
@@ -86,7 +83,7 @@ export const App: React.FC = () => {
         setDoctorUser(null);
         showToast('Sesión cerrada automáticamente por inactividad (10 minutos).');
       }
-    }, 30000); // Check every 30 seconds
+    }, 30000);
 
     return () => {
       window.removeEventListener('mousemove', handleUserActivity);
@@ -153,7 +150,6 @@ export const App: React.FC = () => {
     savePacientes(MOCK_PACIENTES);
     showToast('8 pacientes de demostración cargados en el registro.');
 
-    // Attempt backend sync
     try {
       await fetch('/api/pacientes/seed', {
         method: 'POST',
@@ -172,7 +168,6 @@ export const App: React.FC = () => {
     setShowNuevoPacienteModal(false);
     showToast(`Paciente ${nuevo.nombres} ${nuevo.apellidos} registrado con éxito.`);
 
-    // Attempt backend sync if authenticated
     const token = authService.getToken();
     if (token) {
       try {
@@ -294,7 +289,7 @@ export const App: React.FC = () => {
       es_demo: true,
       respuestas_preguntas: {
         fiebre: 'si',
-        embarazo: 'si', // Triggers red flag rule!
+        embarazo: 'si',
         duracion_3dias: 'si',
       },
     },
@@ -334,14 +329,13 @@ export const App: React.FC = () => {
       intensidad: 5,
       urgencia: 'alta',
       categoria_enfermedad: 'neurologica',
-      confianza: 0.52, // < 0.60
+      confianza: 0.52,
       advertencia_confianza: 'Traducción poco segura, confirmar con el paciente',
       es_demo: true,
       respuestas_preguntas: { golpes_caidas: 'si' },
     },
   ];
 
-  // Analyze audio through backend or fallback demo
   const handleAnalyzeAudio = async (
     audioBase64: string,
     mimeType: string
@@ -373,7 +367,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Analyze manual card selections (Works locally WITHOUT AI as required!)
   const handleAnalyzeManual = async (data: {
     sintomas: string[];
     zona_cuerpo: string;
@@ -411,7 +404,6 @@ export const App: React.FC = () => {
     return fichaLocal;
   };
 
-  // Patient confirms their file -> Save to history & switch to Doctor
   const handleFichaReadyForDoctor = (ficha: FichaClinica) => {
     const id = ficha.id || `consulta-${Date.now()}`;
     const fecha =
@@ -453,7 +445,6 @@ export const App: React.FC = () => {
     showToast('¡Ficha médica enviada a la bandeja médica!');
   };
 
-  // Guided questions update
   const handleActualizarRespuestasPreguntas = (preguntaId: string, respuesta: 'si' | 'no') => {
     if (!activeFicha) return;
 
@@ -479,7 +470,6 @@ export const App: React.FC = () => {
     showToast(`Respuesta registrada: ${respuesta === 'si' ? 'SÍ (Ari)' : 'NO (Manam)'}`);
   };
 
-  // Doctor response translated to Quechua
   const handleDoctorResponse = async (textoEspanol: string): Promise<DoctorRespuesta> => {
     try {
       const response = await fetch('/api/traducir-respuesta', {
@@ -626,48 +616,81 @@ export const App: React.FC = () => {
     showToast(`Ficha del ${consulta.fecha} seleccionada en panel médico.`);
   };
 
+  const isDoctorWorkstation = currentRole === 'medico' && Boolean(doctorUser);
+
   return (
-    <div className="min-h-screen bg-[#FAF6EF] flex flex-col items-center justify-start">
-      <div className="w-full max-w-md min-h-screen bg-[#FAF6EF] flex flex-col shadow-2xl border-x border-[#E3DAC9] relative">
-        {/* Header */}
-        <Header
-          currentRole={currentRole}
-          onSelectRole={(role) => setCurrentRole(role)}
-          onTriggerDemo={() => setShowDemoModal(true)}
-          hasApiKey={hasApiKey}
-          isBackendConnected={isBackendConnected}
-          doctorUser={doctorUser}
-          onLogout={handleLogout}
-        />
+    <div
+      className={`min-h-screen w-full transition-colors ${
+        isDoctorWorkstation
+          ? 'bg-[#FAF6EF]'
+          : 'bg-[#EDE5D8] flex flex-col items-center justify-start py-0 lg:py-6'
+      }`}
+    >
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#2B2625] text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 border border-white/20 animate-in fade-in duration-200 max-w-xs text-center">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
-        {/* Disclaimer Banner with Demostration Fictitious Data notice */}
-        <DisclaimerBanner />
+      {/* VIEWPORT LAYOUT: PATIENT / LOGIN (CENTERED MOBILE-FIRST CARD) vs DOCTOR (EXPANDED WORKSTATION) */}
+      {!isDoctorWorkstation ? (
+        /* PATIENT VIEW OR DOCTOR LOGIN (CENTERED MOBILE-FIRST ON DESKTOP, SOBER BACKGROUND) */
+        <div className="w-full max-w-md min-h-screen lg:min-h-0 bg-[#FAF6EF] flex flex-col shadow-2xl border-x lg:border-2 border-[#E3DAC9] lg:rounded-3xl relative overflow-hidden">
+          <Header
+            currentRole={currentRole}
+            onSelectRole={(role) => setCurrentRole(role)}
+            onTriggerDemo={() => setShowDemoModal(true)}
+            hasApiKey={hasApiKey}
+            isBackendConnected={isBackendConnected}
+            doctorUser={doctorUser}
+            onLogout={handleLogout}
+          />
 
-        {/* Toast Alert */}
-        {toastMessage && (
-          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#2B2625] text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 border border-white/20 animate-in fade-in duration-200 max-w-xs text-center">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{toastMessage}</span>
-          </div>
-        )}
+          <DisclaimerBanner />
 
-        {/* Main Content Area */}
-        <main className="p-4 flex-1">
-          {currentRole === 'paciente' ? (
-            <PatientView
-              onFichaReadyForDoctor={handleFichaReadyForDoctor}
-              onAnalyzeAudio={handleAnalyzeAudio}
-              onAnalyzeManual={handleAnalyzeManual}
-              isLoading={isLoading}
-            />
-          ) : !doctorUser ? (
-            /* DOCTOR LOGIN SCREEN */
-            <DoctorLogin
-              onLoginSuccess={handleLoginSuccess}
-              onCancel={() => setCurrentRole('paciente')}
-            />
-          ) : (
-            /* AUTHENTICATED DOCTOR PANEL */
+          <main className="p-4 flex-1">
+            {currentRole === 'paciente' ? (
+              <PatientView
+                onFichaReadyForDoctor={handleFichaReadyForDoctor}
+                onAnalyzeAudio={handleAnalyzeAudio}
+                onAnalyzeManual={handleAnalyzeManual}
+                isLoading={isLoading}
+              />
+            ) : (
+              <DoctorLogin
+                onLoginSuccess={handleLoginSuccess}
+                onCancel={() => setCurrentRole('paciente')}
+              />
+            )}
+          </main>
+
+          <footer className="p-3 bg-white border-t border-[#E3DAC9] text-center text-[10px] text-[#5C5450] space-y-1">
+            <p>
+              <strong>Willay Salud:</strong> Prototipo funcional de salud intercultural Quechua-Español.
+            </p>
+            <p className="text-[9px] text-[#B84A28]">
+              Términos en quechua marcados como "por validar con hablante nativo".
+            </p>
+          </footer>
+        </div>
+      ) : (
+        /* DOCTOR CLINICAL WORKSTATION (RESPONSIVE FULL WIDTH WITH DESKTOP 3-ZONE LAYOUT) */
+        <div className="w-full min-h-screen flex flex-col">
+          <Header
+            currentRole={currentRole}
+            onSelectRole={(role) => setCurrentRole(role)}
+            onTriggerDemo={() => setShowDemoModal(true)}
+            hasApiKey={hasApiKey}
+            isBackendConnected={isBackendConnected}
+            doctorUser={doctorUser}
+            onLogout={handleLogout}
+          />
+
+          <DisclaimerBanner />
+
+          <main className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 flex-1">
             <DoctorView
               ficha={activeFicha}
               pacientes={pacientes}
@@ -686,22 +709,22 @@ export const App: React.FC = () => {
               onAbrirNuevoPacienteModal={() => setShowNuevoPacienteModal(true)}
               onCargarRegistroEjemplo={handleCargarRegistroEjemplo}
               onIniciarNuevaConsulta={handleIniciarNuevaConsulta}
+              onLogout={handleLogout}
               onToast={showToast}
               isLoading={isLoading}
             />
-          )}
-        </main>
+          </main>
 
-        {/* Footer info & Glossary validation note */}
-        <footer className="p-3 bg-white border-t border-[#E3DAC9] text-center text-[10px] text-[#5C5450] space-y-1">
-          <p>
-            <strong>Willay Salud:</strong> Prototipo funcional de salud intercultural Quechua-Español.
-          </p>
-          <p className="text-[9px] text-[#B84A28]">
-            Términos en quechua marcados como "por validar con hablante nativo".
-          </p>
-        </footer>
-      </div>
+          <footer className="p-3 bg-white border-t border-[#E3DAC9] text-center text-[10px] text-[#5C5450] space-y-1 lg:pl-68">
+            <p>
+              <strong>Willay Salud:</strong> Estación Clínica de Triaje Intercultural.
+            </p>
+            <p className="text-[9px] text-[#B84A28]">
+              Herramienta de apoyo a la comunicación. No reemplaza el diagnóstico médico.
+            </p>
+          </footer>
+        </div>
+      )}
 
       {/* NUEVO PACIENTE MODAL */}
       {showNuevoPacienteModal && (
