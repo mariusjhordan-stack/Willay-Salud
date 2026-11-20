@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle2, RotateCcw, AlertTriangle, Activity, User, Clock, ShieldCheck } from 'lucide-react';
 import { FichaClinica } from '../types';
+import { ConfidenceGauge } from './ConfidenceGauge';
 
 interface ConfirmationScreenProps {
   ficha: FichaClinica;
@@ -87,16 +88,16 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
           </div>
         </div>
 
-        {/* Confidence note if applicable */}
-        {ficha.confianza < 0.6 && (
-          <div className="bg-amber-50 border-2 border-amber-300 p-3 rounded-xl flex items-start gap-2 text-amber-900 text-xs">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <strong className="block font-bold">Atención:</strong>
-              Traducción poco segura, confirmar con el paciente directamente.
+        {/* Confidence visual gauge */}
+        <div className="bg-[#FAF6EF] p-3 rounded-xl border border-[#E3DAC9] flex items-center justify-between">
+          <ConfidenceGauge value={ficha.confianza} size="md" />
+          {ficha.confianza < 0.6 && (
+            <div className="flex items-start gap-1.5 text-amber-900 text-[11px] max-w-[55%]">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <span className="font-bold">Traduccion poco segura, confirmar directamente.</span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {ficha.es_demo && (
           <div className="text-[11px] text-[#5C5450] bg-gray-50 border border-gray-200 p-2 rounded-lg flex items-center gap-1.5">

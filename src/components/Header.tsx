@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isDoctorWorkstation = currentRole === 'medico' && Boolean(doctorUser);
 
   return (
-    <header className="bg-white border-b-2 border-[#E3DAC9] sticky top-0 z-20 shadow-xs w-full">
+    <header className="bg-white border-b-2 border-[#E3DAC9] sticky top-0 z-20 shadow-xs w-full" role="banner" aria-label="Willay Salud - Barra de navegacion">
       <div className={`mx-auto ${isDoctorWorkstation ? 'max-w-7xl lg:pl-68' : 'max-w-md'}`}>
         {/* Top Brand Bar */}
         <div className="px-4 py-2.5 flex items-center justify-between">
@@ -104,9 +104,11 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Role Navigation Bar (Paciente vs Médico) - Hidden on desktop when in Doctor workstation */}
         <div className={`px-4 pb-2 pt-0.5 ${isDoctorWorkstation ? 'lg:hidden' : ''}`}>
-          <div className="bg-[#FAF6EF] p-1 rounded-2xl border border-[#E3DAC9] grid grid-cols-2 gap-1.5">
+          <div className="bg-[#FAF6EF] p-1 rounded-2xl border border-[#E3DAC9] grid grid-cols-2 gap-1.5" role="tablist" aria-label="Selector de rol">
             <button
               type="button"
+              role="tab"
+              aria-selected={currentRole === 'paciente'}
               onClick={() => onSelectRole('paciente')}
               className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 currentRole === 'paciente'
@@ -120,6 +122,8 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               type="button"
+              role="tab"
+              aria-selected={currentRole === 'medico'}
               onClick={() => onSelectRole('medico')}
               className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 currentRole === 'medico'
@@ -128,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               <Stethoscope className="w-4 h-4" />
-              <span>MÉDICO (Hampiq)</span>
+              <span>MEDICO (Hampiq)</span>
             </button>
           </div>
         </div>

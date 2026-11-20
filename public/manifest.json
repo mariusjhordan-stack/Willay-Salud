@@ -1,17 +1,41 @@
 {
-  "name": "Willay Salud",
-  "short_name": "WillaySalud",
-  "description": "Herramienta de comunicación médico-paciente Quechua - Español",
+  "name": "Willay Salud - Comunicacion Intercultural",
+  "short_name": "Willay Salud",
+  "description": "Herramienta de comunicacion medico-paciente Quechua - Español para centros de salud rurales del Peru. Proyecto de impacto social.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FAF6EF",
   "theme_color": "#B84A28",
   "orientation": "portrait-primary",
+  "lang": "es-PE",
+  "categories": ["health", "medical", "education"],
+  "screenshots": [],
   "icons": [
     {
       "src": "/icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml"
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Vista Paciente",
+      "short_name": "Paciente",
+      "description": "Registrar sintomas como paciente",
+      "url": "/?role=paciente"
+    },
+    {
+      "name": "Panel Medico",
+      "short_name": "Medico",
+      "description": "Acceder al panel de triaje medico",
+      "url": "/?role=medico"
     }
   ]
 }

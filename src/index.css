@@ -14,39 +14,145 @@
     --tierra-muted: #5C5450;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: #FAF6EF;
     color: #2B2625;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: #1E6B65;
+    color: white;
+  }
+
+  :focus-visible {
+    outline: 2px solid #1E6B65;
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  input, textarea, select {
+    font-size: 16px;
   }
 }
 
 /* Custom utility classes */
-.bg-crema {
-  background-color: #FAF6EF;
+.bg-crema { background-color: #FAF6EF; }
+.bg-terracota { background-color: #B84A28; }
+.bg-terracota-dark { background-color: #8F3419; }
+.bg-teal-willay { background-color: #1E6B65; }
+.bg-teal-willay-dark { background-color: #134844; }
+.text-terracota { color: #B84A28; }
+.text-teal-willay { color: #1E6B65; }
+.border-terracota { border-color: #B84A28; }
+.border-teal-willay { border-color: #1E6B65; }
+
+/* Urgency pulse animation */
+@keyframes urgency-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
 }
-.bg-terracota {
-  background-color: #B84A28;
+.urgency-pulse { animation: urgency-pulse 2s ease-in-out infinite; }
+
+/* Smooth fade-in for sections */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.bg-terracota-dark {
-  background-color: #8F3419;
+.animate-fade-up { animation: fade-up 0.4s ease-out both; }
+
+/* Stagger children animation */
+@keyframes fade-in-stagger {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.bg-teal-willay {
-  background-color: #1E6B65;
+.animate-stagger > * {
+  animation: fade-in-stagger 0.3s ease-out both;
 }
-.bg-teal-willay-dark {
-  background-color: #134844;
+.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.animate-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.animate-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.animate-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.animate-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.animate-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.animate-stagger > *:nth-child(8) { animation-delay: 350ms; }
+
+/* Slide in from right */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
 }
-.text-terracota {
-  color: #B84A28;
+.animate-slide-in-right { animation: slide-in-right 0.3s ease-out both; }
+
+/* Scale in */
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
-.text-teal-willay {
-  color: #1E6B65;
+.animate-scale-in { animation: scale-in 0.2s ease-out both; }
+
+/* Confidence gauge pulse for low values */
+@keyframes gauge-warn {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
-.border-terracota {
-  border-color: #B84A28;
+.gauge-warn { animation: gauge-warn 1.5s ease-in-out infinite; }
+
+/* Recording pulse ring */
+@keyframes recording-ring {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.3); }
+  70% { box-shadow: 0 0 0 20px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
-.border-teal-willay {
-  border-color: #1E6B65;
+.recording-ring { animation: recording-ring 1.5s ease-out infinite; }
+
+/* Scrollbar styling for doctor panels */
+.doctor-panel-scroll::-webkit-scrollbar { width: 4px; }
+.doctor-panel-scroll::-webkit-scrollbar-track {
+  background: #FAF6EF;
+  border-radius: 4px;
+}
+.doctor-panel-scroll::-webkit-scrollbar-thumb {
+  background: #E3DAC9;
+  border-radius: 4px;
+}
+.doctor-panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: #B84A28;
+}
+
+/* Tabular nums for timers/stats */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Touch-friendly active state */
+@media (hover: none) {
+  button:active {
+    transform: scale(0.97);
+    transition: transform 0.1s;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print styles for PDF-like export */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; color: black; }
+  * { break-inside: avoid; }
+  header, footer { position: static; }
 }

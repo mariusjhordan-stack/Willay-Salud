@@ -43,12 +43,14 @@ export const PatientView: React.FC<PatientViewProps> = ({
 
   const handleSelectZone = (zone: string) => {
     setSelectedZone(zone);
-    // Suggest corresponding symptom from glossary
     const map: Record<string, string> = {
       cabeza: 'dolor de cabeza',
       barriga: 'dolor de barriga',
       garganta: 'dolor de garganta',
       pecho: 'dolor de pecho',
+      brazos: 'dolor de brazos/manos',
+      piernas: 'dolor de piernas/pies',
+      espalda: 'dolor de espalda',
     };
     if (map[zone] && !selectedSymptoms.includes(map[zone])) {
       setSelectedSymptoms((prev) => [...prev, map[zone]]);
@@ -98,7 +100,7 @@ export const PatientView: React.FC<PatientViewProps> = ({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" role="main" aria-label="Vista del paciente - Registro de sintomas">
       {/* Quechua Greeting & Mode Toggle */}
       <div className="bg-[#1E6B65] text-white p-4 rounded-2xl shadow-sm text-center">
         <h2 className="text-xl font-extrabold tracking-tight">

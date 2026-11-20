@@ -19,6 +19,8 @@ import glosarioData from './data/glosario.json';
 import { MOCK_PACIENTES } from './data/mockPacientes';
 import { authService } from './services/authService';
 import { CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { NetworkStatus } from './components/NetworkStatus';
+import { WelcomeScreen } from './components/WelcomeScreen';
 
 const HISTORIAL_STORAGE_KEY = 'willay_salud_historial_consultas';
 const PACIENTES_STORAGE_KEY = 'willay_salud_pacientes_local';
@@ -35,6 +37,9 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showDemoModal, setShowDemoModal] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return !localStorage.getItem('willay_salud_onboarding_done');
+  });
 
   // Load initial session, patients and history
   useEffect(() => {
@@ -618,6 +623,11 @@ export const App: React.FC = () => {
 
   const isDoctorWorkstation = currentRole === 'medico' && Boolean(doctorUser);
 
+  const handleWelcomeComplete = () => {
+    setShowWelcome(false);
+    localStorage.setItem('willay_salud_onboarding_done', 'true');
+  };
+
   return (
     <div
       className={`min-h-screen w-full transition-colors ${
@@ -626,6 +636,9 @@ export const App: React.FC = () => {
           : 'bg-[#EDE5D8] flex flex-col items-center justify-start py-0 lg:py-6'
       }`}
     >
+      {/* Welcome Onboarding Screen */}
+      {showWelcome && <WelcomeScreen onComplete={handleWelcomeComplete} />}
+
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#2B2625] text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 border border-white/20 animate-in fade-in duration-200 max-w-xs text-center">
@@ -633,6 +646,9 @@ export const App: React.FC = () => {
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* Network Status Indicator */}
+      <NetworkStatus />
 
       {/* VIEWPORT LAYOUT: PATIENT / LOGIN (CENTERED MOBILE-FIRST CARD) vs DOCTOR (EXPANDED WORKSTATION) */}
       {!isDoctorWorkstation ? (
@@ -666,12 +682,12 @@ export const App: React.FC = () => {
             )}
           </main>
 
-          <footer className="p-3 bg-white border-t border-[#E3DAC9] text-center text-[10px] text-[#5C5450] space-y-1">
+          <footer className="p-3 bg-white border-t border-[#E3DAC9] text-center text-[10px] text-[#5C5450] space-y-1" role="contentinfo">
             <p>
-              <strong>Willay Salud:</strong> Prototipo funcional de salud intercultural Quechua-Español.
+              <strong>Willay Salud</strong> — Prototipo funcional de salud intercultural Quechua-Español
             </p>
             <p className="text-[9px] text-[#B84A28]">
-              Términos en quechua marcados como "por validar con hablante nativo".
+              Proyecto universitario de impacto social • Términos en quechua por validar con hablante nativo
             </p>
           </footer>
         </div>
@@ -715,12 +731,12 @@ export const App: React.FC = () => {
             />
           </main>
 
-          <footer className="p-3 bg-white border-t border-[#E3DAC9] text-center text-[10px] text-[#5C5450] space-y-1 lg:pl-68">
+          <footer className="p-3 bg-white border-t border-[#E3DAC9] text-center text-[10px] text-[#5C5450] space-y-1 lg:pl-68" role="contentinfo">
             <p>
-              <strong>Willay Salud:</strong> Estación Clínica de Triaje Intercultural.
+              <strong>Willay Salud</strong> — Estación Clínica de Triaje Intercultural
             </p>
             <p className="text-[9px] text-[#B84A28]">
-              Herramienta de apoyo a la comunicación. No reemplaza el diagnóstico médico.
+              Herramienta de apoyo a la comunicación • No reemplaza el diagnóstico médico
             </p>
           </footer>
         </div>

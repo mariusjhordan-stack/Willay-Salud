@@ -21,6 +21,7 @@ import {
   Maximize2,
   Minimize2,
   LogOut,
+  Clock,
   Calendar,
   Activity,
   UserPlus,
@@ -56,7 +57,12 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts';
+import { ConfidenceGauge } from './ConfidenceGauge';
 
 interface DoctorViewProps {
   ficha: FichaClinica | null;
@@ -187,6 +193,21 @@ export const DoctorView: React.FC<DoctorViewProps> = ({
         intensidad: c.intensidad,
       }));
   }, [consultasHistorial]);
+
+  const categoryPieData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    pacientes.forEach((p) => {
+      const cat = p.categoria_enfermedad || 'otra';
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({
+        name: CATEGORIAS_INFO[name as CategoriaEnfermedad]?.label || name,
+        value,
+        color: CATEGORIAS_INFO[name as CategoriaEnfermedad]?.color || '#6B7280',
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [pacientes]);
 
   const handleSend = async () => {
     if (!respuestaEspanol.trim()) return;
@@ -419,27 +440,43 @@ export const DoctorView: React.FC<DoctorViewProps> = ({
         {/* Mobile/Tablet Subtabs */}
         {renderMobileNavTabs()}
 
-        {/* TOP SUMMARY METRICS CARDS (VISIBLE ON ALL SCREENS, EXPANDED IN DESKTOP) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        {/* DATE HEADER */}
+        <div className="flex items-center justify-between animate-fade-up">
+          <div>
+            <h2 className="text-lg font-black text-[#2B2625]">
+              Estacion de Triaje
+            </h2>
+            <p className="text-xs text-[#5C5450]">
+              {new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5 bg-[#E2EFEF] text-[#1E6B65] px-3 py-1.5 rounded-xl border border-[#1E6B65]/20 text-xs font-bold">
+            <Stethoscope className="w-3.5 h-3.5" />
+            <span>{doctorUser.nombre}</span>
+          </div>
+        </div>
+
+        {/* TOP SUMMARY METRICS CARDS */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 animate-fade-up" style={{ animationDelay: '0.1s' }}>
           <div className="bg-white p-3.5 rounded-2xl border-2 border-[#E3DAC9] shadow-xs flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#FAF6EF] text-[#2B2625] flex items-center justify-center shrink-0">
               <Users className="w-5 h-5 text-[#1E6B65]" />
             </div>
             <div>
               <span className="text-[10px] text-[#5C5450] font-bold block uppercase">
-                Pacientes Totales
+                Pacientes
               </span>
               <span className="text-xl font-black text-[#2B2625]">{stats.total}</span>
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-2xl border-2 border-red-200 shadow-xs flex items-center gap-3">
+          <div className={`bg-white p-3.5 rounded-2xl border-2 border-red-200 shadow-xs flex items-center gap-3 ${stats.urgentes > 0 ? 'urgency-pulse' : ''}`}>
             <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[10px] text-red-700 font-bold block uppercase">
-                Casos Urgentes
+                Urgentes
               </span>
               <span className="text-xl font-black text-red-700">{stats.urgentes}</span>
             </div>
@@ -508,7 +545,7 @@ export const DoctorView: React.FC<DoctorViewProps> = ({
             {/* DESKTOP 3-ZONE GRID */}
             <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-start">
               {/* ZONE 1: LISTA DE PACIENTES (COL-SPAN-4) */}
-              <div className="lg:col-span-4 bg-white rounded-3xl border-2 border-[#E3DAC9] p-4 shadow-sm space-y-3 max-h-[820px] overflow-y-auto">
+              <div className="lg:col-span-4 bg-white rounded-3xl border-2 border-[#E3DAC9] p-4 shadow-sm space-y-3 max-h-[820px] overflow-y-auto doctor-panel-scroll">
                 <div className="flex items-center justify-between">
                   <h3 className="font-extrabold text-sm text-[#2B2625] flex items-center gap-1.5">
                     <Users className="w-4 h-4 text-[#1E6B65]" />
@@ -628,7 +665,7 @@ export const DoctorView: React.FC<DoctorViewProps> = ({
               </div>
 
               {/* ZONE 2: FICHA CLÍNICA DEL PACIENTE (COL-SPAN-4) */}
-              <div className="lg:col-span-4 bg-white rounded-3xl border-2 border-[#E3DAC9] p-4 shadow-sm space-y-4 max-h-[820px] overflow-y-auto">
+              <div className="lg:col-span-4 bg-white rounded-3xl border-2 border-[#E3DAC9] p-4 shadow-sm space-y-4 max-h-[820px] overflow-y-auto doctor-panel-scroll">
                 <div className="flex items-center justify-between border-b border-[#E3DAC9] pb-2.5">
                   <div className="flex items-center gap-2">
                     <ClipboardList className="w-4 h-4 text-[#1E6B65]" />
@@ -715,7 +752,7 @@ export const DoctorView: React.FC<DoctorViewProps> = ({
                     {/* Grid of vitals */}
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-[#FAF6EF] p-2.5 rounded-xl border border-[#E3DAC9]">
-                        <span className="text-[10px] text-[#5C5450] block font-bold">Síntomas</span>
+                        <span className="text-[10px] text-[#5C5450] block font-bold">Sintomas</span>
                         <strong className="text-[#2B2625]">{ficha.sintomas.join(', ')}</strong>
                       </div>
                       <div className="bg-[#FAF6EF] p-2.5 rounded-xl border border-[#E3DAC9]">
@@ -723,13 +760,18 @@ export const DoctorView: React.FC<DoctorViewProps> = ({
                         <strong className="text-[#2B2625] capitalize">{ficha.zona_cuerpo}</strong>
                       </div>
                       <div className="bg-[#FAF6EF] p-2.5 rounded-xl border border-[#E3DAC9]">
-                        <span className="text-[10px] text-[#5C5450] block font-bold">Duración</span>
+                        <span className="text-[10px] text-[#5C5450] block font-bold">Duracion</span>
                         <strong className="text-[#2B2625]">{ficha.duracion}</strong>
                       </div>
                       <div className="bg-[#FAF6EF] p-2.5 rounded-xl border border-[#E3DAC9]">
                         <span className="text-[10px] text-[#5C5450] block font-bold">Dolor</span>
                         <strong className="text-[#B84A28]">{ficha.intensidad}/5</strong>
                       </div>
+                    </div>
+
+                    {/* Confidence Gauge */}
+                    <div className="bg-[#FAF6EF] p-3 rounded-xl border border-[#E3DAC9]">
+                      <ConfidenceGauge value={ficha.confianza} size="sm" />
                     </div>
 
                     {/* JSON raw button */}
@@ -753,7 +795,7 @@ export const DoctorView: React.FC<DoctorViewProps> = ({
               </div>
 
               {/* ZONE 3: ALERTAS, PREGUNTAS SÍ/NO Y RESPUESTA AL PACIENTE (COL-SPAN-4) */}
-              <div className="lg:col-span-4 space-y-4 max-h-[820px] overflow-y-auto">
+              <div className="lg:col-span-4 space-y-4 max-h-[820px] overflow-y-auto doctor-panel-scroll">
                 {/* Alertas de bandera roja */}
                 {alertasBanderaRoja.length > 0 && (
                   <div className="bg-red-50 border-2 border-red-500 rounded-3xl p-3.5 shadow-sm space-y-2">
@@ -800,6 +842,43 @@ export const DoctorView: React.FC<DoctorViewProps> = ({
                             dot={{ r: 3, fill: '#B84A28' }}
                           />
                         </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {/* Disease Category Distribution */}
+                {categoryPieData.length > 0 && (
+                  <div className="bg-white rounded-3xl border-2 border-[#E3DAC9] p-3.5 shadow-sm space-y-2">
+                    <span className="text-xs font-bold text-[#2B2625] flex items-center gap-1.5">
+                      <Tag className="w-4 h-4 text-[#1E6B65]" />
+                      <span>Distribucion por Categoria</span>
+                    </span>
+                    <div className="h-40 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={categoryPieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={28}
+                            outerRadius={55}
+                            paddingAngle={3}
+                            dataKey="value"
+                          >
+                            {categoryPieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number, name: string) => [`${value} pacientes`, name]}
+                            contentStyle={{ fontSize: 11, borderRadius: 12, border: '1px solid #E3DAC9' }}
+                          />
+                          <Legend
+                            iconSize={8}
+                            wrapperStyle={{ fontSize: 10, lineHeight: '16px' }}
+                          />
+                        </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </div>

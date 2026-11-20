@@ -41,18 +41,19 @@ export const DoctorLogin: React.FC<DoctorLoginProps> = ({ onLoginSuccess, onCanc
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
+    <div className="space-y-4 animate-fade-up" role="main" aria-label="Inicio de sesion medica">
       <div className="bg-white rounded-3xl p-6 border-2 border-[#E3DAC9] shadow-md space-y-4">
         {/* Brand Header */}
         <div className="text-center space-y-1">
-          <div className="w-14 h-14 bg-[#1E6B65] text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
-            <Stethoscope className="w-8 h-8" />
+          <div className="w-16 h-16 bg-gradient-to-br from-[#1E6B65] to-[#134844] text-white rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+            <Stethoscope className="w-9 h-9" />
           </div>
-          <h2 className="text-xl font-black text-[#2B2625] pt-1">
-            Acceso Médico Profesional
+          <h2 className="text-xl font-black text-[#2B2625] pt-2">
+            Hampiq Yaykuy
           </h2>
+          <p className="text-sm font-bold text-[#1E6B65]">Acceso Médico Profesional</p>
           <p className="text-xs text-[#5C5450]">
-            Ingreso al panel clínico intercultural y gestión de pacientes
+            Panel clínico intercultural y gestión de pacientes
           </p>
         </div>
 

@@ -1,10 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { Mic, Square, Play, RotateCcw, Volume2, Sparkles } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Mic, Square, RotateCcw, Volume2, Sparkles, AlertCircle, Languages } from 'lucide-react';
 
 interface AudioRecorderProps {
   onAudioReady: (audioBase64: string, mimeType: string) => void;
   isLoading: boolean;
 }
+
+const WAVEFORM_BARS = 32;
 
 export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLoading }) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -12,10 +14,39 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLo
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
+  const [waveformData, setWaveformData] = useState<number[]>(new Array(WAVEFORM_BARS).fill(2));
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationRef = useRef<number>(0);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const updateWaveform = useCallback(() => {
+    if (!analyserRef.current) return;
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    analyserRef.current.getByteFrequencyData(dataArray);
+
+    const step = Math.floor(dataArray.length / WAVEFORM_BARS);
+    const bars: number[] = [];
+    for (let i = 0; i < WAVEFORM_BARS; i++) {
+      let sum = 0;
+      for (let j = 0; j < step; j++) {
+        sum += dataArray[i * step + j];
+      }
+      bars.push(Math.max(2, (sum / step / 255) * 40));
+    }
+    setWaveformData(bars);
+    animationRef.current = requestAnimationFrame(updateWaveform);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   const startRecording = async () => {
     setMicError(null);
@@ -26,6 +57,15 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLo
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const audioCtx = new AudioContext();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : MediaRecorder.isTypeSupported('audio/mp4')
@@ -46,20 +86,19 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLo
         setRecordedBlob(audioBlob);
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
-
-        // Stop all tracks to release microphone
         stream.getTracks().forEach((track) => track.stop());
+        audioCtx.close();
       };
 
       mediaRecorder.start(200);
       setIsRecording(true);
+      animationRef.current = requestAnimationFrame(updateWaveform);
 
       timerRef.current = setInterval(() => {
         setRecordSeconds((prev) => prev + 1);
       }, 1000);
-    } catch (err: any) {
-      console.error('Error accessing microphone:', err);
-      setMicError('No se pudo acceder al micrófono. Por favor permite los permisos o usa las tarjetas táctiles.');
+    } catch {
+      setMicError('No se pudo acceder al micrófono. Permite los permisos o usa las tarjetas táctiles.');
       setIsRecording(false);
     }
   };
@@ -69,6 +108,9 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLo
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       if (timerRef.current) clearInterval(timerRef.current);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      analyserRef.current = null;
+      setWaveformData(new Array(WAVEFORM_BARS).fill(2));
     }
   };
 
@@ -78,11 +120,11 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLo
     setRecordSeconds(0);
     setIsRecording(false);
     if (timerRef.current) clearInterval(timerRef.current);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
   };
 
-  const handleSendAudio = async () => {
+  const handleSendAudio = () => {
     if (!recordedBlob) return;
-
     const reader = new FileReader();
     reader.readAsDataURL(recordedBlob);
     reader.onloadend = () => {
@@ -98,8 +140,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLo
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 border-2 border-[#E3DAC9] shadow-sm text-center">
-      <div className="mb-4">
+    <div className="bg-white rounded-2xl p-5 border-2 border-[#E3DAC9] shadow-sm text-center space-y-4" role="region" aria-label="Grabador de voz para sintomas">
+      <div>
         <h3 className="font-extrabold text-lg text-[#2B2625] flex items-center justify-center gap-2">
           <Volume2 className="w-5 h-5 text-[#B84A28]" />
           <span>Rimayta qillqay (Grabar Voz)</span>
@@ -109,82 +151,113 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLo
         </p>
       </div>
 
+      {/* Language hint */}
+      <div className="flex items-center justify-center gap-4 text-[11px] text-[#5C5450]">
+        <span className="flex items-center gap-1 bg-[#FAF6EF] px-2.5 py-1 rounded-lg border border-[#E3DAC9]">
+          <Languages className="w-3.5 h-3.5 text-[#1E6B65]" />
+          Quechua
+        </span>
+        <span className="text-[#E3DAC9] font-bold">o</span>
+        <span className="flex items-center gap-1 bg-[#FAF6EF] px-2.5 py-1 rounded-lg border border-[#E3DAC9]">
+          <Languages className="w-3.5 h-3.5 text-[#B84A28]" />
+          Español
+        </span>
+      </div>
+
       {micError && (
-        <div className="mb-4 p-3 bg-red-50 text-red-800 rounded-xl text-xs text-left border border-red-200">
-          {micError}
+        <div className="p-3 bg-red-50 text-red-800 rounded-xl text-xs text-left border border-red-200 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{micError}</span>
         </div>
       )}
 
-      {/* Recording Animation / Button Area */}
-      <div className="my-4 flex flex-col items-center justify-center">
+      {/* Recording States */}
+      <div className="flex flex-col items-center justify-center">
         {!isRecording && !audioUrl && (
-          <button
-            type="button"
-            onClick={startRecording}
-            disabled={isLoading}
-            className="w-24 h-24 rounded-full bg-[#B84A28] hover:bg-[#8F3419] text-white flex flex-col items-center justify-center shadow-lg transition-transform active:scale-95 border-4 border-[#F6E9E4] cursor-pointer"
-          >
-            <Mic className="w-10 h-10 animate-pulse" />
-            <span className="text-[11px] font-bold mt-1">GRABAR</span>
-          </button>
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={startRecording}
+              disabled={isLoading}
+              className="w-28 h-28 rounded-full bg-[#B84A28] hover:bg-[#8F3419] text-white flex flex-col items-center justify-center shadow-lg transition-all active:scale-95 border-4 border-[#F6E9E4] cursor-pointer hover:shadow-xl disabled:opacity-50"
+              aria-label="Iniciar grabacion de voz"
+            >
+              <Mic className="w-10 h-10" />
+              <span className="text-[11px] font-bold mt-1">GRABAR</span>
+            </button>
+            <p className="text-[10px] text-[#5C5450]">Toca para comenzar</p>
+          </div>
         )}
 
         {isRecording && (
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-red-600 text-white flex flex-col items-center justify-center shadow-xl animate-pulse border-4 border-red-200">
-                <Square className="w-8 h-8 fill-current" />
-              </div>
-              <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600"></span>
+          <div className="flex flex-col items-center gap-4 w-full">
+            {/* Live waveform visualization */}
+            <div className="flex items-center justify-center gap-[2px] h-16 w-full max-w-xs" aria-hidden="true">
+              {waveformData.map((height, i) => (
+                <div
+                  key={i}
+                  className="w-1.5 rounded-full bg-red-500 transition-all duration-75"
+                  style={{ height: `${height}px`, opacity: 0.5 + (height / 40) * 0.5 }}
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600" />
+              </span>
+              <span className="text-2xl font-mono font-black text-red-600 tabular-nums">
+                {formatTime(recordSeconds)}
               </span>
             </div>
-            <div className="text-xl font-mono font-bold text-red-600">
-              {formatTime(recordSeconds)}
-            </div>
+
             <button
               type="button"
               onClick={stopRecording}
-              className="px-6 py-2.5 bg-[#2B2625] text-white rounded-xl text-sm font-bold shadow-md hover:bg-black transition-all cursor-pointer"
+              className="px-8 py-3 bg-[#2B2625] text-white rounded-2xl text-sm font-bold shadow-md hover:bg-black transition-all cursor-pointer flex items-center gap-2"
             >
-              Parar Grabación (Sayachiy)
+              <Square className="w-4 h-4 fill-current" />
+              <span>Sayachiy (Parar)</span>
             </button>
           </div>
         )}
 
         {audioUrl && !isRecording && (
           <div className="w-full space-y-3">
-            <div className="p-3 bg-[#FAF6EF] rounded-xl border border-[#E3DAC9] flex items-center justify-between">
+            <div className="p-3 bg-[#FAF6EF] rounded-xl border border-[#E3DAC9]">
               <audio src={audioUrl} controls className="h-10 w-full" />
+              <p className="text-[10px] text-[#5C5450] mt-1.5 font-medium">
+                Duración: {formatTime(recordSeconds)}
+              </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={resetRecording}
                 disabled={isLoading}
-                className="flex-1 py-3 px-4 rounded-xl border-2 border-[#E3DAC9] text-[#5C5450] font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
+                className="py-3 px-4 rounded-xl border-2 border-[#E3DAC9] text-[#5C5450] font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>Volver a grabar</span>
+                <span>Otra vez</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleSendAudio}
                 disabled={isLoading}
-                className="flex-2 py-3 px-4 rounded-xl bg-[#1E6B65] hover:bg-[#134844] text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 transition-transform active:scale-98 disabled:opacity-50"
+                className="py-3 px-4 rounded-xl bg-[#1E6B65] hover:bg-[#134844] text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50 cursor-pointer"
               >
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Analizando con IA...</span>
+                    <span>Analizando...</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    <span>Analizar Audio</span>
+                    <span>Analizar</span>
                   </>
                 )}
               </button>
@@ -193,8 +266,14 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioReady, isLo
         )}
       </div>
 
-      <div className="mt-3 text-[11px] text-[#5C5450]">
-        Frase de ejemplo: <em>"Uma nanaywanmi kashani, iskay punchawña sinchita nanawan"</em>
+      <div className="bg-[#FAF6EF] rounded-xl p-3 border border-[#E3DAC9] text-left space-y-1">
+        <span className="text-[10px] font-bold text-[#5C5450] uppercase">Frases de ejemplo:</span>
+        <p className="text-xs text-[#1E6B65] font-semibold italic">
+          "Uma nanaywanmi kashani, iskay punchawña sinchita nanawan"
+        </p>
+        <p className="text-[11px] text-[#5C5450]">
+          (Me duele la cabeza, llevo dos días con dolor fuerte)
+        </p>
       </div>
     </div>
   );
